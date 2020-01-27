@@ -4,6 +4,7 @@
 #include <d3dcompiler.h>
 #include <wrl.h>
 #include <iterator>
+#include <DirectXMath.h>
 
 #pragma comment( lib,"d3d11.lib" )
 #pragma comment( lib,"d3dcompiler.lib")
@@ -218,33 +219,61 @@ public:
 			{ +0.0f, +0.5f, 1.0f,0.0f,0.0f,1.0f },
 			{ +0.5f, -0.5f, 0.0f,1.0f,0.0f,1.0f },
 			{ -0.5f, -0.5f, 0.0f,0.0f,1.0f,1.0f } };
-		
-		const UINT STRIDE = sizeof( Vertex );
-		const UINT OFFSET = 0u;
+
+		const unsigned short INDICES[] = {
+			0,1,2 };
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
+		const UINT VS_STRIDE = sizeof( Vertex );
+		const UINT VS_OFFSET = 0u;
 
 		// interface pointers
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobVS;
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobPS;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		pVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		pIndexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	pVertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pPixelShader;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	pInputLayout;
 
-		// create and set buffer descriptor
-		D3D11_BUFFER_DESC buffer_desc = {};
-		buffer_desc.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.ByteWidth			= sizeof( VERTICES );
-		buffer_desc.CPUAccessFlags		= 0u;
-		buffer_desc.MiscFlags			= 0u;
-		buffer_desc.StructureByteStride	= STRIDE;
-		buffer_desc.Usage				= D3D11_USAGE_DEFAULT;
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
+		// create and set vertex buffer descriptor
+		D3D11_BUFFER_DESC vertex_buffer_desc = {};
+		vertex_buffer_desc.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
+		vertex_buffer_desc.ByteWidth			= sizeof( VERTICES );
+		vertex_buffer_desc.CPUAccessFlags		= 0u;
+		vertex_buffer_desc.MiscFlags			= 0u;
+		vertex_buffer_desc.StructureByteStride	= sizeof( Vertex );
+		vertex_buffer_desc.Usage				= D3D11_USAGE_DEFAULT;
 
-		// create and set subresourse descriptor
-		D3D11_SUBRESOURCE_DATA subresource_desc = {};
-		subresource_desc.pSysMem			= VERTICES;
-		subresource_desc.SysMemPitch		= 0u;
-		subresource_desc.SysMemSlicePitch	= 0u;
+		// create and set vertex subresourse descriptor
+		D3D11_SUBRESOURCE_DATA vertex_subresource_desc = {};
+		vertex_subresource_desc.pSysMem				= VERTICES;
+		vertex_subresource_desc.SysMemPitch			= 0u;
+		vertex_subresource_desc.SysMemSlicePitch	= 0u;
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
+		// create and set index buffer descriptor
+		D3D11_BUFFER_DESC index_buffer_desc = {};
+		index_buffer_desc.BindFlags				= D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.ByteWidth				= sizeof( INDICES );
+		index_buffer_desc.CPUAccessFlags		= 0u;
+		index_buffer_desc.MiscFlags				= 0u;
+		index_buffer_desc.StructureByteStride	= sizeof( unsigned short );
+		index_buffer_desc.Usage					= D3D11_USAGE_DEFAULT;
 
+		// create and set index subresourse descriptor
+		D3D11_SUBRESOURCE_DATA index_subresource_desc = {};
+		index_subresource_desc.pSysMem			= INDICES;
+		index_subresource_desc.SysMemPitch		= 0u;
+		index_subresource_desc.SysMemSlicePitch = 0u;
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
 		// create and set input element descriptor
 		D3D11_INPUT_ELEMENT_DESC input_element_desc_0 = {};
 		input_element_desc_0.AlignedByteOffset		= 0u;
@@ -269,7 +298,9 @@ public:
 		const D3D11_INPUT_ELEMENT_DESC INPUT_ELEMENT_DESCS[] = { 
 			input_element_desc_0,
 			input_element_desc_1 };
-
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
 		// create and set viewport
 		D3D11_VIEWPORT viewport = {};
 		viewport.Width		= 800.0f;
@@ -293,13 +324,15 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pDevice->CreateBuffer( &buffer_desc, &subresource_desc, &pVertexBuffer );
+		pDevice->CreateBuffer( &vertex_buffer_desc, &vertex_subresource_desc, &pVertexBuffer );
+
+		pDevice->CreateBuffer( &index_buffer_desc, &index_subresource_desc, &pIndexBuffer );
 				
 		pDevice->CreateVertexShader( pBlobVS->GetBufferPointer(),
-			pBlobVS->GetBufferSize(),	nullptr, &pVertexShader	);
+			pBlobVS->GetBufferSize(), nullptr, &pVertexShader );
 
 		pDevice->CreatePixelShader( pBlobPS->GetBufferPointer(),
-			pBlobPS->GetBufferSize(), nullptr,	&pPixelShader );		
+			pBlobPS->GetBufferSize(), nullptr, &pPixelShader );		
 
 		pDevice->CreateInputLayout(	
 			INPUT_ELEMENT_DESCS,
@@ -318,7 +351,9 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pContext->IASetVertexBuffers( 0u, 1u, pVertexBuffer.GetAddressOf(), &STRIDE, &OFFSET );				
+		pContext->IASetVertexBuffers( 0u, 1u, pVertexBuffer.GetAddressOf(), &VS_STRIDE, &VS_OFFSET );
+
+		pContext->IASetIndexBuffer( pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u );
 
 		///////////////////////////////////////////////////////
 		//                                                   //
@@ -368,7 +403,7 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pContext->Draw(	static_cast<UINT>(std::size( VERTICES )), 0u );
+		pContext->DrawIndexed( static_cast<UINT>(std::size( INDICES )), 0u, 0u );
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////
