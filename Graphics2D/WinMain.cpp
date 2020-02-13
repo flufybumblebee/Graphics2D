@@ -1,4 +1,6 @@
 #include <Windows.h>
+#include <chrono>
+
 #include "Graphics.h"
 
 // user defined windows procedure
@@ -74,6 +76,8 @@ int WINAPI wWinMain(
 	// create graphics object
 	Graphics gfx( hWnd );
 
+	std::chrono::steady_clock::time_point start;
+
 	while (true)
 	{
 		// message loop
@@ -89,9 +93,12 @@ int WINAPI wWinMain(
 			DispatchMessage( &msg );
 		}
 
+		// set angle using time since start
+		float angle = std::chrono::duration<float>( std::chrono::steady_clock::now() - start ).count();
+
 		// graphics function calls
 		gfx.BeginFrame();
-		gfx.DrawTriangle();
+		gfx.DrawTriangle( angle );
 		gfx.EndFrame();
 	}
 

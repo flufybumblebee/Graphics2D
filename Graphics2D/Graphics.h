@@ -181,14 +181,13 @@ public:
 	void BeginFrame()
 	{
 		const float RED		= 1.0f;
-		const float GREEN	= 0.0f;
-		const float BLUE	= 0.0f;
+		const float GREEN	= 1.0f;
+		const float BLUE	= 1.0f;
 		const float COLOR[] = { RED, GREEN, BLUE, 1.0f };
 
 		pContext->ClearRenderTargetView( 
 			pRenderTargetView.Get(),
-			COLOR
-			);
+			COLOR );
 	}
 	void EndFrame()
 	{
@@ -200,7 +199,7 @@ public:
 	{
 
 	}
-	void DrawTriangle()
+	void DrawTriangle( float angle )
 	{
 	//////////////////////////////////////////////////////////////
 	//                                                          //
@@ -215,13 +214,80 @@ public:
 			float a;
 		};
 
-		const Vertex VERTICES[] = {
-			{ +0.0f, +0.5f, 1.0f,0.0f,0.0f,1.0f },
-			{ +0.5f, -0.5f, 0.0f,1.0f,0.0f,1.0f },
-			{ -0.5f, -0.5f, 0.0f,0.0f,1.0f,1.0f } };
+		const float ZRO = 0.0f;
+		const float PI = 3.1415927f;
+		const float HYP = 0.5f;
+		const float ADJ = HYP * cos( PI / 6 );
+		const float OPP = sqrt( (HYP * HYP) - (ADJ * ADJ) );
+
+
+		/*          0           */
+		/*                      */
+		/*   4            5     */
+		/*                      */
+		/*                      */
+		/*   2            1     */
+		/*                      */
+		/*          3           */
+
+		Vertex v0 = { +ZRO,+HYP, 1.0f, 0.0f, 0.0f, 1.0f };
+		Vertex v1 = { +ADJ,-OPP, 0.0f, 1.0f, 0.0f, 1.0f };
+		Vertex v2 = { -ADJ,-OPP, 0.0f, 0.0f, 1.0f, 1.0f };
+		Vertex v3 = { +ZRO,-HYP, 1.0f, 0.0f, 0.0f, 1.0f };
+		Vertex v4 = { -ADJ,+OPP, 0.0f, 1.0f, 0.0f, 1.0f };
+		Vertex v5 = { +ADJ,+OPP, 0.0f, 0.0f, 1.0f, 1.0f };
+
+		const Vertex VERTICES[] =
+		{
+			// hexagon: indexed triangle list
+			v0,v1,v2,v3,v4,v5
+
+			/*// hexagon: triangle strip
+			{ +ZRO,+HYP },
+			{ +ADJ,+OPP },
+			{ -ADJ,+OPP },
+			{ +ADJ,-OPP },
+			{ -ADJ,-OPP },
+			{ +ZRO,-HYP }
+
+			// hexagon: triangle list
+			{ +ZRO,+HYP },
+			{ +ADJ,-OPP },
+			{ -ADJ,-OPP },
+
+			{ +ZRO,+HYP },
+			{ +ADJ,+OPP },
+			{ +ADJ,-OPP },
+
+			{ +ADJ,-OPP },
+			{ +ZRO,-HYP },
+			{ -ADJ,-OPP },
+
+			{ -ADJ,-OPP },
+			{ -ADJ,+OPP },
+			{ +ZRO,+HYP }
+
+			// triangle: triangle list
+			{ +ZRO,+HYP },
+			{ +ADJ,-OPP },
+			{ -ADJ,-OPP }*/
+		};
+
+		struct ConstantBuffer
+		{
+			DirectX::XMMATRIX transform;
+		};
+			
+		const ConstantBuffer TRANS = {
+			DirectX::XMMatrixTranspose(	
+				DirectX::XMMatrixRotationZ( angle )	* 
+				DirectX::XMMatrixScaling( 3.0f / 4.0f, 1.0f, 1.0f ) ) };
 
 		const unsigned short INDICES[] = {
-			0,1,2 };
+			0,1,2,
+			0,5,1,
+			1,3,2,
+			2,4,0 };
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
@@ -231,11 +297,12 @@ public:
 		// interface pointers
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobVS;
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobPS;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		pVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		pConstantBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		pIndexBuffer;
-		Microsoft::WRL::ComPtr<ID3D11VertexShader>	pVertexShader;
-		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pPixelShader;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	pInputLayout;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pPixelShader;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		pVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	pVertexShader;
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////
@@ -249,11 +316,11 @@ public:
 		vertex_buffer_desc.StructureByteStride	= sizeof( Vertex );
 		vertex_buffer_desc.Usage				= D3D11_USAGE_DEFAULT;
 
-		// create and set vertex subresourse descriptor
-		D3D11_SUBRESOURCE_DATA vertex_subresource_desc = {};
-		vertex_subresource_desc.pSysMem				= VERTICES;
-		vertex_subresource_desc.SysMemPitch			= 0u;
-		vertex_subresource_desc.SysMemSlicePitch	= 0u;
+		// create and set vertex subresourse data
+		D3D11_SUBRESOURCE_DATA vertex_subresource_data = {};
+		vertex_subresource_data.pSysMem				= VERTICES;
+		vertex_subresource_data.SysMemPitch			= 0u;
+		vertex_subresource_data.SysMemSlicePitch	= 0u;
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
@@ -266,11 +333,11 @@ public:
 		index_buffer_desc.StructureByteStride	= sizeof( unsigned short );
 		index_buffer_desc.Usage					= D3D11_USAGE_DEFAULT;
 
-		// create and set index subresourse descriptor
-		D3D11_SUBRESOURCE_DATA index_subresource_desc = {};
-		index_subresource_desc.pSysMem			= INDICES;
-		index_subresource_desc.SysMemPitch		= 0u;
-		index_subresource_desc.SysMemSlicePitch = 0u;
+		// create and set index subresourse data
+		D3D11_SUBRESOURCE_DATA index_subresource_data = {};
+		index_subresource_data.pSysMem			= INDICES;
+		index_subresource_data.SysMemPitch		= 0u;
+		index_subresource_data.SysMemSlicePitch = 0u;
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
@@ -286,7 +353,7 @@ public:
 
 		// create and set input element descriptor
 		D3D11_INPUT_ELEMENT_DESC input_element_desc_1 = {};
-		input_element_desc_1.AlignedByteOffset		= 8u;
+		input_element_desc_1.AlignedByteOffset		= 8u; // offset from previous descriptor in array
 		input_element_desc_1.Format					= DXGI_FORMAT_R32G32B32A32_FLOAT;
 		input_element_desc_1.InputSlot				= 0u;
 		input_element_desc_1.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
@@ -298,6 +365,22 @@ public:
 		const D3D11_INPUT_ELEMENT_DESC INPUT_ELEMENT_DESCS[] = { 
 			input_element_desc_0,
 			input_element_desc_1 };
+
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
+
+		D3D11_BUFFER_DESC constant_buffer_desc = {};
+		constant_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		constant_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		constant_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		constant_buffer_desc.MiscFlags = 0u;
+		constant_buffer_desc.ByteWidth = sizeof( TRANS );
+		constant_buffer_desc.StructureByteStride = 0u;
+
+		D3D11_SUBRESOURCE_DATA constant_buffer_subresource_data = {};
+		constant_buffer_subresource_data.pSysMem = &TRANS;
+
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
@@ -320,13 +403,13 @@ public:
 	//                                                           //
 		///////////////////////////////////////////////////////
 		//                                                   //
-		//                   SET UP DEVICE                   //
+		//                     SET DEVICE                    //
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pDevice->CreateBuffer( &vertex_buffer_desc, &vertex_subresource_desc, &pVertexBuffer );
-
-		pDevice->CreateBuffer( &index_buffer_desc, &index_subresource_desc, &pIndexBuffer );
+		pDevice->CreateBuffer( &vertex_buffer_desc,		&vertex_subresource_data,			&pVertexBuffer		);
+		pDevice->CreateBuffer( &index_buffer_desc,		&index_subresource_data,			&pIndexBuffer		);
+		pDevice->CreateBuffer( &constant_buffer_desc,	&constant_buffer_subresource_data,	&pConstantBuffer	);
 				
 		pDevice->CreateVertexShader( pBlobVS->GetBufferPointer(),
 			pBlobVS->GetBufferSize(), nullptr, &pVertexShader );
@@ -361,7 +444,9 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////			
 		
-		pContext->VSSetShader( pVertexShader.Get(), nullptr, 0u );		
+		pContext->VSSetShader( pVertexShader.Get(), nullptr, 0u );	
+
+		pContext->VSSetConstantBuffers( 0u, 1u, pConstantBuffer.GetAddressOf() );
 
 		///////////////////////////////////////////////////////
 		//                                                   //
@@ -409,10 +494,10 @@ public:
 	///////////////////////////////////////////////////////////////
 	}
 private:
-	Microsoft::WRL::ComPtr<ID3D11Device>				pDevice;
-	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>			pContext;
+	Microsoft::WRL::ComPtr<ID3D11Device>				pDevice;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>		pRenderTargetView;
+	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
 	//Microsoft::WRL::ComPtr<ID3D11Texture2D>				pSysBufferTexture;
 	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	pSysBufferTextureView;
 	//Microsoft::WRL::ComPtr<ID3D11PixelShader>			pPixelShader;
