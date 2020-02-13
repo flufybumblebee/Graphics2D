@@ -66,112 +66,6 @@ public:
 			nullptr,
 			&pRenderTargetView
 			);
-		//
-		//// set backbuffer as the render target using created view
-		//pContext->OMSetRenderTargets( 1, pRenderTargetView.GetAddressOf(), nullptr );
-		//
-		//// create viewport and set dimensions
-		//D3D11_VIEWPORT viewport;
-		//viewport.Width	= float( Graphics::SCREEN_W );
-		//viewport.Height	= float( Graphics::SCREEN_H );
-		//viewport.MinDepth = 0.0f;
-		//viewport.MaxDepth = 1.0f;
-		//viewport.TopLeftX = 0.0f;
-		//viewport.TopLeftY = 0.0f;
-		//
-		//pContext->RSSetViewports( 1, &viewport );
-		//
-		//// create texture for cpu render target
-		//D3D11_TEXTURE2D_DESC sysTexDesc;
-		//sysTexDesc.Width				= Graphics::SCREEN_W;
-		//sysTexDesc.Height				= Graphics::SCREEN_H;
-		//sysTexDesc.MipLevels			= 1u;
-		//sysTexDesc.ArraySize			= 1u;
-		//sysTexDesc.Format				= DXGI_FORMAT_B8G8R8A8_UNORM;
-		//sysTexDesc.SampleDesc.Count		= 1u;
-		//sysTexDesc.SampleDesc.Quality	= 0u;
-		//sysTexDesc.Usage				= D3D11_USAGE_DYNAMIC;
-		//sysTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
-		//sysTexDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
-		//sysTexDesc.MiscFlags			= 0u;
-		//
-		//// create the texture
-		//hr = pDevice->CreateTexture2D(
-		//	&sysTexDesc,
-		//	nullptr,
-		//	&pSysBufferTexture
-		//	);
-		//
-		//// shader
-		//D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		//srvDesc.Format				= sysTexDesc.Format;
-		//srvDesc.ViewDimension		= D3D11_SRV_DIMENSION_TEXTURE2D;
-		//srvDesc.Texture2D.MipLevels = 1u;
-		//
-		//// create the resource view on the texture
-		//hr = pDevice->CreateShaderResourceView(
-		//	pSysBufferTexture.Get(),
-		//	&srvDesc,
-		//	&pSysBufferTextureView
-		//	);
-		//
-		//// create pixel shader for framebuffer
-		//hr = pDevice->CreatePixelShader(
-		//	FramebufferShaders::FramebufferPSBytecode,
-		//	sizeof( FramebufferShaders::FramebufferPSBytecode ),
-		//	nullptr,
-		//	&pPixelShader );
-		//
-		//// create vertex shader for framebuffer
-		//hr = pDevice->CreateVertexShader(
-		//	FramebufferShaders::FramebufferVSBytecode,
-		//	sizeof( FramebufferShaders::FramebufferVSBytecode ),
-		//	nullptr,
-		//	&pVertexShader );
-		//
-		//
-		//D3D11_BUFFER_DESC buffer_desc = {};
-		//buffer_desc.Usage			= D3D11_USAGE_DEFAULT;
-		//buffer_desc.ByteWidth		= sizeof( FSQVertex ) * 6;
-		//buffer_desc.BindFlags		= D3D11_BIND_VERTEX_BUFFER;
-		//buffer_desc.CPUAccessFlags	= 0u;
-		//
-		//D3D11_SUBRESOURCE_DATA initData = {};
-		//initData.pSysMem = vertices;
-		//
-		//hr = pDevice->CreateBuffer( 
-		//	&buffer_desc,
-		//	&initData,
-		//	&pVertexBuffer
-		//	);
-		//		
-		//// create input layout for fullscreen quad
-		//const D3D11_INPUT_ELEMENT_DESC ied[] =
-		//{
-		//	{ "POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-		//	{ "TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0 }
-		//};
-		//
-		//// Ignore the intellisense error "namespace has no member"
-		//hr = pDevice->CreateInputLayout( 
-		//	ied, 
-		//	2u,
-		//	FramebufferShaders::FramebufferVSBytecode,
-		//	sizeof( FramebufferShaders::FramebufferVSBytecode ),
-		//	&pInputLayout
-		//	);
-		//
-		//// Create sampler state for fullscreen textured quad
-		//D3D11_SAMPLER_DESC sampDesc = {};
-		//sampDesc.Filter			= D3D11_FILTER_MIN_MAG_MIP_POINT;
-		//sampDesc.AddressU		= D3D11_TEXTURE_ADDRESS_CLAMP;
-		//sampDesc.AddressV		= D3D11_TEXTURE_ADDRESS_CLAMP;
-		//sampDesc.AddressW		= D3D11_TEXTURE_ADDRESS_CLAMP;
-		//sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		//sampDesc.MinLOD			= 0;
-		//sampDesc.MaxLOD			= D3D11_FLOAT32_MAX;
-		//
-		//hr = pDevice->CreateSamplerState( &sampDesc, &pSamplerState );
 	}
 	Graphics( const Graphics& ) = delete;
 	Graphics& operator = ( const Graphics& ) = delete;
@@ -199,7 +93,7 @@ public:
 	{
 
 	}
-	void DrawTriangle( float angle )
+	void DrawCube( float angle )
 	{
 	//////////////////////////////////////////////////////////////
 	//                                                          //
@@ -207,87 +101,47 @@ public:
 		{
 			float x;
 			float y;
+			float z;
 
 			float r;
 			float g;
 			float b;
 			float a;
-		};
+		};		
 
-		const float ZRO = 0.0f;
-		const float PI = 3.1415927f;
-		const float HYP = 0.5f;
-		const float ADJ = HYP * cos( PI / 6 );
-		const float OPP = sqrt( (HYP * HYP) - (ADJ * ADJ) );
+		Vertex v0 = { -1.0f,+1.0f,-1.0f, 1.0f,0.0f,0.0f,1.0f }; // top    left  front
+		Vertex v1 = { +1.0f,+1.0f,-1.0f, 0.0f,1.0f,0.0f,1.0f }; // top    right front
+		Vertex v2 = { +1.0f,-1.0f,-1.0f, 0.0f,0.0f,1.0f,1.0f }; // bottom right front
+		Vertex v3 = { -1.0f,-1.0f,-1.0f, 1.0f,0.0f,0.0f,1.0f }; // bottom left  front
+		Vertex v4 = { -1.0f,+1.0f,+1.0f, 1.0f,0.0f,0.0f,1.0f }; // top    left  back
+		Vertex v5 = { +1.0f,+1.0f,+1.0f, 0.0f,1.0f,0.0f,1.0f }; // top    right back
+		Vertex v6 = { +1.0f,-1.0f,+1.0f, 0.0f,0.0f,1.0f,1.0f }; // bottom right back
+		Vertex v7 = { -1.0f,-1.0f,+1.0f, 1.0f,0.0f,0.0f,1.0f }; // bottom left  back
 
-
-		/*          0           */
-		/*                      */
-		/*   4            5     */
-		/*                      */
-		/*                      */
-		/*   2            1     */
-		/*                      */
-		/*          3           */
-
-		Vertex v0 = { +ZRO,+HYP, 1.0f, 0.0f, 0.0f, 1.0f };
-		Vertex v1 = { +ADJ,-OPP, 0.0f, 1.0f, 0.0f, 1.0f };
-		Vertex v2 = { -ADJ,-OPP, 0.0f, 0.0f, 1.0f, 1.0f };
-		Vertex v3 = { +ZRO,-HYP, 1.0f, 0.0f, 0.0f, 1.0f };
-		Vertex v4 = { -ADJ,+OPP, 0.0f, 1.0f, 0.0f, 1.0f };
-		Vertex v5 = { +ADJ,+OPP, 0.0f, 0.0f, 1.0f, 1.0f };
-
-		const Vertex VERTICES[] =
-		{
-			// hexagon: indexed triangle list
-			v0,v1,v2,v3,v4,v5
-
-			/*// hexagon: triangle strip
-			{ +ZRO,+HYP },
-			{ +ADJ,+OPP },
-			{ -ADJ,+OPP },
-			{ +ADJ,-OPP },
-			{ -ADJ,-OPP },
-			{ +ZRO,-HYP }
-
-			// hexagon: triangle list
-			{ +ZRO,+HYP },
-			{ +ADJ,-OPP },
-			{ -ADJ,-OPP },
-
-			{ +ZRO,+HYP },
-			{ +ADJ,+OPP },
-			{ +ADJ,-OPP },
-
-			{ +ADJ,-OPP },
-			{ +ZRO,-HYP },
-			{ -ADJ,-OPP },
-
-			{ -ADJ,-OPP },
-			{ -ADJ,+OPP },
-			{ +ZRO,+HYP }
-
-			// triangle: triangle list
-			{ +ZRO,+HYP },
-			{ +ADJ,-OPP },
-			{ -ADJ,-OPP }*/
-		};
+		const Vertex VERTICES[] = {	v0,v1,v2,v3,v4,v5,v6,v7	};
 
 		struct ConstantBuffer
 		{
 			DirectX::XMMATRIX transform;
 		};
 			
-		const ConstantBuffer TRANS = {
-			DirectX::XMMatrixTranspose(	
+		const ConstantBuffer TRANSFORMATION_MATRIX = {
+			DirectX::XMMatrixTranspose(
+				DirectX::XMMatrixRotationX( angle * 2.0f ) *
+				DirectX::XMMatrixRotationY( angle ) *
 				DirectX::XMMatrixRotationZ( angle )	* 
-				DirectX::XMMatrixScaling( 3.0f / 4.0f, 1.0f, 1.0f ) ) };
+				DirectX::XMMatrixScaling( 1.0f, 1.0f, 1.0f ) * 
+				DirectX::XMMatrixTranslation(0.0f,0.0f,4.0f) *
+				DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 10.0f ) ) };
 
 		const unsigned short INDICES[] = {
-			0,1,2,
-			0,5,1,
-			1,3,2,
-			2,4,0 };
+			0,1,2,	0,2,3, // front
+			0,3,7,	0,7,4, // left
+			5,4,7,	5,7,6, // back
+			1,5,6,	1,6,2, // right
+			4,5,1,	4,1,0, // top
+			3,2,6,	3,6,7  // bottom
+			};
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
@@ -344,7 +198,7 @@ public:
 		// create and set input element descriptor
 		D3D11_INPUT_ELEMENT_DESC input_element_desc_0 = {};
 		input_element_desc_0.AlignedByteOffset		= 0u;
-		input_element_desc_0.Format					= DXGI_FORMAT_R32G32_FLOAT;
+		input_element_desc_0.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
 		input_element_desc_0.InputSlot				= 0u;
 		input_element_desc_0.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
 		input_element_desc_0.InstanceDataStepRate	= 0u;
@@ -353,7 +207,7 @@ public:
 
 		// create and set input element descriptor
 		D3D11_INPUT_ELEMENT_DESC input_element_desc_1 = {};
-		input_element_desc_1.AlignedByteOffset		= 8u; // offset from previous descriptor in array
+		input_element_desc_1.AlignedByteOffset		= 12u; // offset from previous descriptor in array
 		input_element_desc_1.Format					= DXGI_FORMAT_R32G32B32A32_FLOAT;
 		input_element_desc_1.InputSlot				= 0u;
 		input_element_desc_1.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
@@ -371,15 +225,15 @@ public:
 	//                                                           //
 
 		D3D11_BUFFER_DESC constant_buffer_desc = {};
-		constant_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		constant_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		constant_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		constant_buffer_desc.MiscFlags = 0u;
-		constant_buffer_desc.ByteWidth = sizeof( TRANS );
-		constant_buffer_desc.StructureByteStride = 0u;
+		constant_buffer_desc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
+		constant_buffer_desc.Usage					= D3D11_USAGE_DYNAMIC;
+		constant_buffer_desc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
+		constant_buffer_desc.MiscFlags				= 0u;
+		constant_buffer_desc.ByteWidth				= sizeof( TRANSFORMATION_MATRIX );
+		constant_buffer_desc.StructureByteStride	= 0u;
 
 		D3D11_SUBRESOURCE_DATA constant_buffer_subresource_data = {};
-		constant_buffer_subresource_data.pSysMem = &TRANS;
+		constant_buffer_subresource_data.pSysMem = &TRANSFORMATION_MATRIX;
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////

@@ -98,7 +98,7 @@ int WINAPI wWinMain(
 
 		// graphics function calls
 		gfx.BeginFrame();
-		gfx.DrawTriangle( angle );
+		gfx.DrawCube( angle );
 		gfx.EndFrame();
 	}
 
