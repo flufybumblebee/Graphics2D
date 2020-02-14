@@ -102,23 +102,31 @@ public:
 			float x;
 			float y;
 			float z;
-
-			float r;
-			float g;
-			float b;
-			float a;
 		};		
 
-		Vertex v0 = { -1.0f,+1.0f,-1.0f, 1.0f,0.0f,0.0f,1.0f }; // top    left  front
-		Vertex v1 = { +1.0f,+1.0f,-1.0f, 0.0f,1.0f,0.0f,1.0f }; // top    right front
-		Vertex v2 = { +1.0f,-1.0f,-1.0f, 0.0f,0.0f,1.0f,1.0f }; // bottom right front
-		Vertex v3 = { -1.0f,-1.0f,-1.0f, 1.0f,0.0f,0.0f,1.0f }; // bottom left  front
-		Vertex v4 = { -1.0f,+1.0f,+1.0f, 1.0f,0.0f,0.0f,1.0f }; // top    left  back
-		Vertex v5 = { +1.0f,+1.0f,+1.0f, 0.0f,1.0f,0.0f,1.0f }; // top    right back
-		Vertex v6 = { +1.0f,-1.0f,+1.0f, 0.0f,0.0f,1.0f,1.0f }; // bottom right back
-		Vertex v7 = { -1.0f,-1.0f,+1.0f, 1.0f,0.0f,0.0f,1.0f }; // bottom left  back
+		Vertex v0 = { -1.0f,+1.0f,-1.0f }; // top    left  front
+		Vertex v1 = { +1.0f,+1.0f,-1.0f }; // top    right front
+		Vertex v2 = { +1.0f,-1.0f,-1.0f }; // bottom right front
+		Vertex v3 = { -1.0f,-1.0f,-1.0f }; // bottom left  front
+		Vertex v4 = { -1.0f,+1.0f,+1.0f }; // top    left  back
+		Vertex v5 = { +1.0f,+1.0f,+1.0f }; // top    right back
+		Vertex v6 = { +1.0f,-1.0f,+1.0f }; // bottom right back
+		Vertex v7 = { -1.0f,-1.0f,+1.0f }; // bottom left  back
 
 		const Vertex VERTICES[] = {	v0,v1,v2,v3,v4,v5,v6,v7	};
+
+		const unsigned short INDICES[] = {
+			0,1,2,	0,2,3, // front
+			0,3,7,	0,7,4, // left
+			5,4,7,	5,7,6, // back
+			1,5,6,	1,6,2, // right
+			4,5,1,	4,1,0, // top
+			3,2,6,	3,6,7  // bottom
+			};
+
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
 
 		struct ConstantBuffer
 		{
@@ -131,20 +139,36 @@ public:
 				DirectX::XMMatrixRotationY( angle ) *
 				DirectX::XMMatrixRotationZ( angle )	* 
 				DirectX::XMMatrixScaling( 1.0f, 1.0f, 1.0f ) * 
-				DirectX::XMMatrixTranslation(0.0f,0.0f,4.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 10.0f ) ) };
+				DirectX::XMMatrixTranslation( 0.0f, 0.0f, 4.0f) *
+				DirectX::XMMatrixPerspectiveLH( 1.0f, 3.0f / 4.0f, 0.5f, 10.0f ) ) };
 
-		const unsigned short INDICES[] = {
-			0,1,2,	0,2,3, // front
-			0,3,7,	0,7,4, // left
-			5,4,7,	5,7,6, // back
-			1,5,6,	1,6,2, // right
-			4,5,1,	4,1,0, // top
-			3,2,6,	3,6,7  // bottom
-			};
+		struct ConstantBuffer2
+		{
+			struct
+			{
+				float r;
+				float g;
+				float b;
+				float a;
+			} colors[6];
+		};
+
+		const ConstantBuffer2 COLORS =
+		{
+			{
+				{1.0f, 0.0f, 0.0f},
+				{0.0f, 1.0f, 0.0f},
+				{0.0f, 0.0f, 1.0f},
+				{1.0f, 1.0f, 0.0f},
+				{1.0f, 0.0f, 1.0f},
+				{0.0f, 1.0f, 1.0f}
+			}
+		};
+		
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
+
 		const UINT VS_STRIDE = sizeof( Vertex );
 		const UINT VS_OFFSET = 0u;
 
@@ -152,6 +176,7 @@ public:
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobVS;
 		Microsoft::WRL::ComPtr<ID3DBlob>			pBlobPS;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		pConstantBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		pConstantBuffer2;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		pIndexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	pInputLayout;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	pPixelShader;
@@ -161,6 +186,7 @@ public:
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
+
 		// create and set vertex buffer descriptor
 		D3D11_BUFFER_DESC vertex_buffer_desc = {};
 		vertex_buffer_desc.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
@@ -175,9 +201,11 @@ public:
 		vertex_subresource_data.pSysMem				= VERTICES;
 		vertex_subresource_data.SysMemPitch			= 0u;
 		vertex_subresource_data.SysMemSlicePitch	= 0u;
+
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
+
 		// create and set index buffer descriptor
 		D3D11_BUFFER_DESC index_buffer_desc = {};
 		index_buffer_desc.BindFlags				= D3D11_BIND_INDEX_BUFFER;
@@ -192,33 +220,24 @@ public:
 		index_subresource_data.pSysMem			= INDICES;
 		index_subresource_data.SysMemPitch		= 0u;
 		index_subresource_data.SysMemSlicePitch = 0u;
+
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	//                                                           //
-		// create and set input element descriptor
-		D3D11_INPUT_ELEMENT_DESC input_element_desc_0 = {};
-		input_element_desc_0.AlignedByteOffset		= 0u;
-		input_element_desc_0.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		input_element_desc_0.InputSlot				= 0u;
-		input_element_desc_0.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		input_element_desc_0.InstanceDataStepRate	= 0u;
-		input_element_desc_0.SemanticIndex			= 0u;
-		input_element_desc_0.SemanticName			= "POSITION";
 
 		// create and set input element descriptor
-		D3D11_INPUT_ELEMENT_DESC input_element_desc_1 = {};
-		input_element_desc_1.AlignedByteOffset		= 12u; // offset from previous descriptor in array
-		input_element_desc_1.Format					= DXGI_FORMAT_R32G32B32A32_FLOAT;
-		input_element_desc_1.InputSlot				= 0u;
-		input_element_desc_1.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		input_element_desc_1.InstanceDataStepRate	= 0u;
-		input_element_desc_1.SemanticIndex			= 0u;
-		input_element_desc_1.SemanticName			= "COLOR";
+		D3D11_INPUT_ELEMENT_DESC input_element_desc = {};
+		input_element_desc.AlignedByteOffset		= 0u;
+		input_element_desc.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
+		input_element_desc.InputSlot				= 0u;
+		input_element_desc.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+		input_element_desc.InstanceDataStepRate		= 0u;
+		input_element_desc.SemanticIndex			= 0u;
+		input_element_desc.SemanticName				= "POSITION";
 
 		// create and set input element descriptor array
 		const D3D11_INPUT_ELEMENT_DESC INPUT_ELEMENT_DESCS[] = { 
-			input_element_desc_0,
-			input_element_desc_1 };
+			input_element_desc };
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////
@@ -226,14 +245,29 @@ public:
 
 		D3D11_BUFFER_DESC constant_buffer_desc = {};
 		constant_buffer_desc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
-		constant_buffer_desc.Usage					= D3D11_USAGE_DYNAMIC;
+		constant_buffer_desc.ByteWidth				= sizeof( TRANSFORMATION_MATRIX );
 		constant_buffer_desc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
 		constant_buffer_desc.MiscFlags				= 0u;
-		constant_buffer_desc.ByteWidth				= sizeof( TRANSFORMATION_MATRIX );
 		constant_buffer_desc.StructureByteStride	= 0u;
+		constant_buffer_desc.Usage					= D3D11_USAGE_DYNAMIC;
 
 		D3D11_SUBRESOURCE_DATA constant_buffer_subresource_data = {};
 		constant_buffer_subresource_data.pSysMem = &TRANSFORMATION_MATRIX;
+
+	//                                                           //
+	///////////////////////////////////////////////////////////////
+	//                                                           //
+
+		D3D11_BUFFER_DESC constant_buffer_2_desc = {};
+		constant_buffer_2_desc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+		constant_buffer_2_desc.ByteWidth			= sizeof( COLORS );
+		constant_buffer_2_desc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+		constant_buffer_2_desc.MiscFlags			= 0u;
+		constant_buffer_2_desc.StructureByteStride	= 0u;
+		constant_buffer_2_desc.Usage				= D3D11_USAGE_DYNAMIC;
+
+		D3D11_SUBRESOURCE_DATA constant_buffer_2_subresource_data = {};
+		constant_buffer_2_subresource_data.pSysMem = &COLORS;
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////
@@ -261,23 +295,44 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pDevice->CreateBuffer( &vertex_buffer_desc,		&vertex_subresource_data,			&pVertexBuffer		);
-		pDevice->CreateBuffer( &index_buffer_desc,		&index_subresource_data,			&pIndexBuffer		);
-		pDevice->CreateBuffer( &constant_buffer_desc,	&constant_buffer_subresource_data,	&pConstantBuffer	);
-				
-		pDevice->CreateVertexShader( pBlobVS->GetBufferPointer(),
-			pBlobVS->GetBufferSize(), nullptr, &pVertexShader );
+		pDevice->CreateBuffer( 
+			&vertex_buffer_desc,
+			&vertex_subresource_data,
+			&pVertexBuffer );
 
-		pDevice->CreatePixelShader( pBlobPS->GetBufferPointer(),
-			pBlobPS->GetBufferSize(), nullptr, &pPixelShader );		
+		pDevice->CreateBuffer(
+			&index_buffer_desc,
+			&index_subresource_data,
+			&pIndexBuffer );
+
+		pDevice->CreateBuffer(
+			&constant_buffer_desc,
+			&constant_buffer_subresource_data,
+			&pConstantBuffer );
+
+		pDevice->CreateBuffer(
+			&constant_buffer_2_desc,
+			&constant_buffer_2_subresource_data,
+			&pConstantBuffer2 );
+				
+		pDevice->CreateVertexShader( 
+			pBlobVS->GetBufferPointer(),
+			pBlobVS->GetBufferSize(),
+			nullptr,
+			&pVertexShader );
+
+		pDevice->CreatePixelShader(
+			pBlobPS->GetBufferPointer(),
+			pBlobPS->GetBufferSize(),
+			nullptr,
+			&pPixelShader );		
 
 		pDevice->CreateInputLayout(	
 			INPUT_ELEMENT_DESCS,
 			static_cast<UINT>(std::size( INPUT_ELEMENT_DESCS )),
 			pBlobVS->GetBufferPointer(),
 			pBlobVS->GetBufferSize(),
-			&pInputLayout
-			);
+			&pInputLayout );
 
 	//                                                           //
 	///////////////////////////////////////////////////////////////
@@ -328,6 +383,8 @@ public:
 		
 		pContext->PSSetShader( pPixelShader.Get(), nullptr, 0u );
 
+		pContext->PSSetConstantBuffers( 0u, 1u, pConstantBuffer2.GetAddressOf() );
+
 		///////////////////////////////////////////////////////
 		//                                                   //
 		//               OUTPUT MERGER STAGE                 //
@@ -347,27 +404,13 @@ public:
 	//                                                           //
 	///////////////////////////////////////////////////////////////
 	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>			pContext;
 	Microsoft::WRL::ComPtr<ID3D11Device>				pDevice;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>		pRenderTargetView;
 	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
-	//Microsoft::WRL::ComPtr<ID3D11Texture2D>				pSysBufferTexture;
-	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	pSysBufferTextureView;
-	//Microsoft::WRL::ComPtr<ID3D11PixelShader>			pPixelShader;
-	//Microsoft::WRL::ComPtr<ID3D11VertexShader>			pVertexShader;
-	//Microsoft::WRL::ComPtr<ID3D11Buffer>				pVertexBuffer;
-	//Microsoft::WRL::ComPtr<ID3D11InputLayout>			pInputLayout;
-	//Microsoft::WRL::ComPtr<ID3D11SamplerState>			pSamplerState;
-	//D3D11_MAPPED_SUBRESOURCE							mappedSysBufferTexture;
 
-private:
-	//// vertex format for the framebuffer fullscreen textured quad
-	//struct FSQVertex
-	//{
-	//	float x, y, z;		// position
-	//	float u, v;			// texcoords
-	//};
 private:
 	static constexpr UINT SCREEN_W = 800u;
 	static constexpr UINT SCREEN_H = 600u;
