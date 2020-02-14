@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <chrono>
+#include <random>
+#include <vector>
 
 #include "Graphics.h"
 
@@ -78,6 +80,45 @@ int WINAPI wWinMain(
 
 	std::chrono::steady_clock::time_point start;
 
+	std::random_device rd;
+	std::mt19937_64 mt( rd() );
+	std::uniform_real_distribution<float> random_float_xy( -5.0f, 5.0f );
+	std::uniform_real_distribution<float> random_float_z( 0.0f, 6.0f );
+	std::uniform_real_distribution<float> random_float_angle( 0.0f, 1.0f );
+	
+	struct Vertex
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+	struct Angle
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+	std::vector<Vertex> vertices;
+	std::vector<Angle> angles;
+
+	const UINT NUM = 100;
+
+	for (int i = 0; i < NUM; i++)
+	{
+		Vertex v = { 
+			random_float_xy( mt ),
+			random_float_xy( mt ),
+			random_float_z( mt ) };
+		vertices.emplace_back( v );
+		Angle a = {
+			random_float_angle( mt ),
+			random_float_angle( mt ),
+			random_float_angle( mt ) };
+		angles.emplace_back( a );
+	}
+
 	while (true)
 	{
 		// message loop
@@ -96,11 +137,23 @@ int WINAPI wWinMain(
 		// set angle using time since start
 		float angle = std::chrono::duration<float>( std::chrono::steady_clock::now() - start ).count();
 
-		float x = sin( angle );
+		//float x = sin( angle );
 		// graphics function calls
 		gfx.BeginFrame();
-		gfx.DrawCube( x, 0.0f, 0.0f, 0.0f );
-		gfx.DrawCube( angle, 0.0f, 0.0f, x );
+		/*gfx.DrawCube( x,x,x, 0.0f, 0.0f, 0.5f );
+		gfx.DrawCube( angle,angle,angle, x, x, x );*/
+	
+		for (int i = 0; i < NUM; i++)
+		{			
+			gfx.DrawCube( 
+				vertices[i].x,
+				vertices[i].y,
+				vertices[i].z,
+				angles[i].x + angle / 2.0f,
+				angles[i].y + angle / 2.0f,
+				angles[i].z + angle / 2.0f );
+		}
+
 		gfx.EndFrame();
 	}
 

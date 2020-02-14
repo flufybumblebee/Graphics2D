@@ -137,7 +137,7 @@ public:
 	{
 
 	}
-	void DrawCube( float angle, float x, float y, float z )
+	void DrawCube( float posX, float posY, float posZ, float angleX, float angleY, float angleZ )
 	{
 	//////////////////////////////////////////////////////////////
 	//                                                          //
@@ -179,11 +179,11 @@ public:
 			
 		const ConstantBuffer TRANSFORMATION_MATRIX = {
 			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationX( angle * 2.0f ) *
-				DirectX::XMMatrixRotationY( angle ) *
-				DirectX::XMMatrixRotationZ( angle )	* 
+				DirectX::XMMatrixRotationX( angleX ) *
+				DirectX::XMMatrixRotationY( angleY ) *
+				DirectX::XMMatrixRotationZ( angleZ )	* 
 				DirectX::XMMatrixScaling( 1.0f, 1.0f, 1.0f ) * 
-				DirectX::XMMatrixTranslation( x, y, z + 4.0f) *
+				DirectX::XMMatrixTranslation( posX, posY, posZ + 4.0f) *
 				DirectX::XMMatrixPerspectiveLH( 1.0f, 3.0f / 4.0f, 0.5f, 10.0f ) ) };
 
 		struct ConstantBuffer2
