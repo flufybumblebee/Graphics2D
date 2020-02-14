@@ -66,6 +66,45 @@ public:
 			nullptr,
 			&pRenderTargetView
 			);
+
+		// create depth stencil state
+		D3D11_DEPTH_STENCIL_DESC depth_stencil_desc = {};
+		depth_stencil_desc.DepthEnable = TRUE;
+		depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS;
+
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilState> pDepthStencilState;
+		pDevice->CreateDepthStencilState( &depth_stencil_desc, &pDepthStencilState );
+				
+		// bind depth stencil
+		pContext->OMSetDepthStencilState( pDepthStencilState.Get(), 1u );
+
+		// create depth stencil texture
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> pDepthStencil;
+
+		D3D11_TEXTURE2D_DESC depth_stencil_texture_desc = {};
+		depth_stencil_texture_desc.Width				= 800u;
+		depth_stencil_texture_desc.Height				= 600u;
+		depth_stencil_texture_desc.MipLevels			= 1u;
+		depth_stencil_texture_desc.ArraySize			= 1u;
+		depth_stencil_texture_desc.Format				= DXGI_FORMAT_D32_FLOAT;
+		depth_stencil_texture_desc.SampleDesc.Count		= 1u;
+		depth_stencil_texture_desc.SampleDesc.Quality	= 0u;
+		depth_stencil_texture_desc.Usage				= D3D11_USAGE_DEFAULT;
+		depth_stencil_texture_desc.BindFlags			= D3D11_BIND_DEPTH_STENCIL;
+
+		pDevice->CreateTexture2D( &depth_stencil_texture_desc, nullptr, &pDepthStencil );
+
+		// create view of depth stensil texture
+		D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
+		depth_stencil_view_desc.Format				= DXGI_FORMAT_D32_FLOAT;
+		depth_stencil_view_desc.ViewDimension		= D3D11_DSV_DIMENSION_TEXTURE2D;
+		depth_stencil_view_desc.Texture2D.MipSlice	= 0u;
+
+		pDevice->CreateDepthStencilView( pDepthStencil.Get(), &depth_stencil_view_desc, &pDepthStencilView );
+
+		// bind depth stencil view to OM
+		pContext->OMSetRenderTargets( 1u, pRenderTargetView.GetAddressOf(), pDepthStencilView.Get() );
 	}
 	Graphics( const Graphics& ) = delete;
 	Graphics& operator = ( const Graphics& ) = delete;
@@ -82,6 +121,11 @@ public:
 		pContext->ClearRenderTargetView( 
 			pRenderTargetView.Get(),
 			COLOR );
+		pContext->ClearDepthStencilView( 
+			pDepthStencilView.Get(),
+			D3D11_CLEAR_DEPTH,
+			1.0f,
+			0u );
 	}
 	void EndFrame()
 	{
@@ -93,7 +137,7 @@ public:
 	{
 
 	}
-	void DrawCube( float angle )
+	void DrawCube( float angle, float x, float y, float z )
 	{
 	//////////////////////////////////////////////////////////////
 	//                                                          //
@@ -139,7 +183,7 @@ public:
 				DirectX::XMMatrixRotationY( angle ) *
 				DirectX::XMMatrixRotationZ( angle )	* 
 				DirectX::XMMatrixScaling( 1.0f, 1.0f, 1.0f ) * 
-				DirectX::XMMatrixTranslation( 0.0f, 0.0f, 4.0f) *
+				DirectX::XMMatrixTranslation( x, y, z + 4.0f) *
 				DirectX::XMMatrixPerspectiveLH( 1.0f, 3.0f / 4.0f, 0.5f, 10.0f ) ) };
 
 		struct ConstantBuffer2
@@ -391,7 +435,7 @@ public:
 		//                                                   //
 		///////////////////////////////////////////////////////
 
-		pContext->OMSetRenderTargets( 1u, pRenderTargetView.GetAddressOf(), nullptr );
+		//pContext->OMSetRenderTargets( 1u, pRenderTargetView.GetAddressOf(), nullptr );
 
 		///////////////////////////////////////////////////////
 		//                                                   //
@@ -408,6 +452,7 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>			pContext;
 	Microsoft::WRL::ComPtr<ID3D11Device>				pDevice;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>		pDepthStencilView;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>		pRenderTargetView;
 	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
 

@@ -96,9 +96,11 @@ int WINAPI wWinMain(
 		// set angle using time since start
 		float angle = std::chrono::duration<float>( std::chrono::steady_clock::now() - start ).count();
 
+		float x = sin( angle );
 		// graphics function calls
 		gfx.BeginFrame();
-		gfx.DrawCube( angle );
+		gfx.DrawCube( x, 0.0f, 0.0f, 0.0f );
+		gfx.DrawCube( angle, 0.0f, 0.0f, x );
 		gfx.EndFrame();
 	}
 
